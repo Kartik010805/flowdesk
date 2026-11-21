@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>User Management | FlowDesk</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-danger px-4">
+    <a class="navbar-brand fw-bold" href="/admin/dashboard">
+        FlowDesk Admin
+    </a>
+
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn btn-light btn-sm">
+            Logout
+        </button>
+    </form>
+</nav>
+
+<div class="container py-5">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>User Management</h2>
+            <p class="text-muted">
+                Create and manage employee accounts.
+            </p>
+        </div>
+
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Success Message -->
+    <div th:if="${successMessage}"
+         class="alert alert-success"
+         role="alert"
+         th:text="${successMessage}">
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${errorMessage}"
+         class="alert alert-danger"
+         role="alert"
+         th:text="${errorMessage}">
+    </div>
+
+    <!-- Create User Card -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-white fw-bold">
+            Create New User
+        </div>
+
+        <div class="card-body">
+
+            <form th:action="@{/admin/users/create}" method="post">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        <input type="text"
+                               name="fullName"
+                               class="form-control"
+                               placeholder="Enter full name"
+                               required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Email Address</label>
+                        <input type="email"
+                               name="email"
+                               class="form-control"
+                               placeholder="Enter email address"
+                               required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Password</label>
+                        <input type="password"
+                               name="password"
+                               class="form-control"
+                               placeholder="Minimum 8 characters"
+                               minlength="8"
+                               required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Role</label>
+                        <select name="role"
+                                class="form-select"
+                                required>
+
+                            <option value="">Select Role</option>
+
+                            <option th:each="role : ${roles}"
+                                    th:value="${role}"
+                                    th:text="${role}">
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Department</label>
+                        <select name="departmentId"
+                                class="form-select">
+
+                            <option value="">No Department</option>
+
+                            <option th:each="department : ${departments}"
+                                    th:value="${department.id}"
+                                    th:text="${department.name}">
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Assign Manager</label>
+
+                        <select name="managerId" class="form-select">
+
+                            <option value="">No Manager Assigned</option>
+
+                            <option th:each="manager : ${managers}"
+                                    th:value="${manager.id}"
+                                    th:text="${manager.fullName + ' (' + manager.email + ')'}">
+                            </option>
+
+                        </select>
+
+                        <div class="form-text">
+                            Employees must have an active manager.
+                            Managers do not require manager assignment.
+                        </div>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-4">
+                    Create Account
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Registered Users -->
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-white fw-bold">
+            Registered Users
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Manager</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <th:block th:each="user : ${users}">
+
+                    <tr>
+
+                        <td th:text="${user.id}"></td>
+
+                        <td th:text="${user.fullName}"></td>
+
+                        <td th:text="${user.email}"></td>
+
+                        <td th:text="${user.role}"></td>
+
+                        <td th:text="${user.department != null
+                                      ? user.department.name : 'N/A'}">
+                        </td>
+
+                        <td th:text="${user.manager != null
+                                      ? user.manager.fullName : 'N/A'}">
+                        </td>
+
+                        <td>
+                            <span th:if="${user.status.name() == 'ACTIVE'}"
+                                  class="badge bg-success">
+                                ACTIVE
+                            </span>
+
+                            <span th:if="${user.status.name() == 'INACTIVE'}"
+                                  class="badge bg-secondary">
+                                INACTIVE
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="d-flex gap-2">
+
+                                <button th:if="${user.role.name() != 'ADMIN'}"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="collapse"
+                                        th:attr="data-bs-target='#editUser' + ${user.id}">
+                                    Edit
+                                </button>
+
+                                <form th:if="${user.role.name() != 'ADMIN' and user.status.name() == 'ACTIVE'}"
+                                      th:action="@{/admin/users/deactivate/{id}(id=${user.id})}"
+                                      method="post"
+                                      onsubmit="return confirm('Are you sure you want to deactivate this account?');">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-danger">
+                                        Deactivate
+                                    </button>
+
+                                </form>
+
+                                <form th:if="${user.role.name() != 'ADMIN' and user.status.name() == 'INACTIVE'}"
+                                      th:action="@{/admin/users/activate/{id}(id=${user.id})}"
+                                      method="post"
+                                      onsubmit="return confirm('Are you sure you want to activate this account?');">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-success">
+                                        Activate
+                                    </button>
+
+                                </form>
+
+                            </div>
+                        </td>
+
+                    </tr>
+
+                    <!-- Expandable Edit Form -->
+                    <tr th:if="${user.role.name() != 'ADMIN'}">
+
+                        <td colspan="8" class="p-0 border-0">
+
+                            <div class="collapse"
+                                 th:id="'editUser' + ${user.id}">
+
+                                <div class="card card-body rounded-0 bg-light">
+
+                                    <h6 class="mb-3">
+                                        Edit User:
+                                        <span th:text="${user.fullName}"></span>
+                                    </h6>
+
+                                    <form th:action="@{/admin/users/update/{id}(id=${user.id})}"
+                                          method="post">
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-6">
+                                                <label class="form-label">
+                                                    Full Name
+                                                </label>
+
+                                                <input type="text"
+                                                       name="fullName"
+                                                       class="form-control"
+                                                       th:value="${user.fullName}"
+                                                       required>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label">
+                                                    Email Address
+                                                </label>
+
+                                                <input type="email"
+                                                       name="email"
+                                                       class="form-control"
+                                                       th:value="${user.email}"
+                                                       required>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label">
+                                                    Department
+                                                </label>
+
+                                                <select name="departmentId"
+                                                        class="form-select">
+
+                                                    <option value="">
+                                                        No Department
+                                                    </option>
+
+                                                    <option th:each="department : ${departments}"
+                                                            th:value="${department.id}"
+                                                            th:text="${department.name}"
+                                                            th:selected="${user.department != null and user.department.id == department.id}">
+                                                    </option>
+
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6"
+                                                 th:if="${user.role.name() == 'EMPLOYEE'}">
+
+                                                <label class="form-label">
+                                                    Assign Manager
+                                                </label>
+
+                                                <select name="managerId"
+                                                        class="form-select"
+                                                        required>
+
+                                                    <option value="">
+                                                        Select Manager
+                                                    </option>
+
+                                                    <option th:each="manager : ${managers}"
+                                                            th:value="${manager.id}"
+                                                            th:text="${manager.fullName}"
+                                                            th:selected="${user.manager != null and user.manager.id == manager.id}">
+                                                    </option>
+
+                                                </select>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <button type="submit"
+                                                    class="btn btn-primary btn-sm">
+                                                Save Changes
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn btn-secondary btn-sm"
+                                                    data-bs-toggle="collapse"
+                                                    th:attr="data-bs-target='#editUser' + ${user.id}">
+                                                Cancel
+                                            </button>
+                                        </div>
+
+                                    </form>
+
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                </th:block>
+
+                <tr th:if="${#lists.isEmpty(users)}">
+                    <td colspan="8"
+                        class="text-center text-muted py-4">
+                        No users found.
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>
